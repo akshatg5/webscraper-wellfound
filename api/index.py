@@ -7,6 +7,7 @@ import concurrent.futures
 import threading
 import logging
 from selenium import webdriver
+from webdriver_manager.utils import config
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -19,11 +20,14 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+config.cache_dir = "/tmp"
+
 @app.route('/')
 def home():
     return 'JOB scraper!'
 
 def setup_selenium_driver():
+    config.cache_dir = "/tmp"
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
