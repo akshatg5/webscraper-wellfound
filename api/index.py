@@ -1,5 +1,6 @@
 import os
 from flask import Flask, jsonify, request
+import json
 from flask_cors import CORS
 import requests
 from selenium import webdriver
@@ -204,6 +205,126 @@ def scrape_wellfound_jobs(keywords):
     finally:
         if driver:
             driver.quit()
+
+def search_wellfound_jobs(keywords=[], page=1, max_pages=5):
+    """
+    Search jobs on Wellfound using GraphQL endpoint
+    """
+    all_job_listings = []
+
+    # Base GraphQL request payload
+    graphql_url = 'https://wellfound.com/graphql?fallbackAOR=talent'
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Apollographql-Client-Name': 'talent-web',
+        'Origin': 'https://wellfound.com',
+        'Referer': 'https://wellfound.com/jobs'
+    }
+
+    for current_page in range(1, max_pages + 1):
+        payload = {
+            "operationName": "JobSearchResultsX",
+            "variables": {
+                "filterConfigurationInput": {
+                    "page": current_page,
+                    "keywords": keywords,
+                    "remoteCompanyLocationTagIds": ["1692", "1693"],
+                    "excludedKeywords": [
+                        "web3", 
+                        "crypto", 
+                        "cryptocurrency"
+                    ],
+                    "jobTypes": ["full_time"],
+                    "remotePreference": "REMOTE_OPEN",
+                    "salary": {"min": None, "max": None},
+                    "yearsExperience": {"max": 2, "min": None}
+                }
+            },
+            "extensions": {
+                "operationId": "tfe/b898ee628dd3385e1b8c467e464a0261ad66c478eda6e21e10566b0ca4ccf1e9"
+            }
+        }
+
+        try:
+            response = requests.post(graphql_url, json=payload, headers=headers)
+            response.raise_for_status()
+            
+            data = response.json()
+            startups = data["data"]["talent"]["jobSearchResults"]["startups"]["edges"]
+            
+            for startup in startups:
+                startup_info = startup["node"]
+                startup_job_listings = startup_info["highlightedJobListings"]
+
+                for job in startup_job_listings:
+                    job_entry = {
+                        "title": job["title"],
+                        "company": startup_info.get("name", "Unknown"),
+                        "description": job["description"],
+                        "compensation": job["compensation"],
+                        "job_type": job["jobType"],
+                        "remote": job["remote"],
+                        "posted_date": job["liveStartAt"],
+                        "id": job["id"],
+                        "slug": job["slug"]
+                    }
+                    all_job_listings.append(job_entry)
+
+            # Check if there are more pages
+            has_next_page = data["data"]["talent"]["jobSearchResults"]["hasNextPage"]
+            if not has_next_page:
+                break
+
+        except requests.RequestException as e:
+            print(f"Request error: {e}")
+            break
+
+        # Pause to avoid rate limiting
+        time.sleep(2)
+
+    return all_job_listings
+
+# cannot use this as this required login
+@app.route('/advanced_job_search', methods=['POST'])
+def advanced_job_search():
+    try:
+        data = request.json or {}
+        keywords = data.get('keywords', [])
+        page = data.get('page', 1)
+        max_pages = data.get('max_pages', 5)
+
+        # Validate inputs
+        if not isinstance(keywords, list):
+            return jsonify({
+                'error': 'Keywords must be a list',
+                'status': 'failed'
+            }), 400
+
+        # Perform job search
+        jobs = search_wellfound_jobs(keywords, page, max_pages)
+
+        # Aggregate statistics
+        companies = set(job['company'] for job in jobs)
+        job_types = set(job['job_type'] for job in jobs)
+
+        return jsonify({
+            'total_jobs_found': len(jobs),
+            'jobs': jobs,
+            'total_companies': len(companies),
+            'job_types': list(job_types),
+            'search_metadata': {
+                'keywords': keywords,
+                'page': page,
+                'max_pages_searched': max_pages
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'failed'
+        }), 500
 
 @app.route('/search_jobs', methods=['POST'])
 def search_jobs():
