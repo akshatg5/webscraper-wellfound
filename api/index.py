@@ -19,9 +19,6 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 @app.route('/')
 def home():
     return 'JOB scraper!'
@@ -64,7 +61,7 @@ def extract_job_details(job_element):
             'logo_url': logo_url
         }
     except Exception as e:
-        logger.error(f"Error extracting job details: {e}")
+        print(f"Error extracting job details: {e}")
         return None
 
 def parse_job_details(details_text):
@@ -104,7 +101,7 @@ def scrape_jobs():
         
         # Extract job details
         jobs = []
-        for job_element in job_elements:  # Limit to first 10 jobs
+        for job_element in job_elements: 
             job_details = extract_job_details(job_element)
             if job_details:
                 jobs.append(job_details)
@@ -115,7 +112,7 @@ def scrape_jobs():
                 })
     
     except Exception as e:
-        logger.error(f"Scraping error: {e}")
+        print(f"Scraping error: {e}")
         return jsonify({'error': str(e)}), 500
     
     finally:
@@ -135,15 +132,14 @@ def get_full_soup():
         return soup.prettify()
         
     except Exception as e:
-        logger.error(f"Soup error : {e}")
+        print(f"Soup error : {e}")
         return jsonify({"error" : str(e)})
 
     finally : 
         if driver : 
             driver.quit()
             
-            
-def scrape_wellfound_jobs(keywords, max_pages=3):
+def scrape_wellfound_jobs(keywords):
     """
     Scrape jobs from Wellfound with keyword filtering
     """
@@ -199,15 +195,14 @@ def scrape_wellfound_jobs(keywords, max_pages=3):
                     all_jobs.append(job_entry)
                 
                 except Exception as e:
-                    logger.error(f"Error extracting individual job: {e}")
+                    print(f"Error extracting individual job: {e}")
             
-            # Optional: Add page navigation if needed
             time.sleep(2)  # Brief pause between keyword searches
         
         return all_jobs
     
     except Exception as e:
-        logger.error(f"Scraping error: {e}")
+        print(f"Scraping error: {e}")
         return []
     
     finally:
@@ -216,7 +211,6 @@ def scrape_wellfound_jobs(keywords, max_pages=3):
 
 @app.route('/search_jobs', methods=['POST'])
 def search_jobs():
-    # Get keywords from request
     keywords = request.json.get('keywords', [])
     
     if not keywords:
