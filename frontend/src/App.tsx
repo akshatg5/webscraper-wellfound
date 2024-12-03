@@ -23,11 +23,9 @@ function App() {
 
   const fetchJobsAndCompanies = async () => {
     try {
-      const res = await axios.post(
+      const res = await axios.get(
         "http://127.0.0.1:5000/scrape_jobs",
-        { keywords },
         {
-          withCredentials: true,
           headers: {
             "Content-Type": "application/json",
           },
