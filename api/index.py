@@ -1,17 +1,6 @@
 import os
 from flask import Flask, jsonify, request
-import json
 from flask_cors import CORS
-import requests
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
-import time
 from dotenv import load_dotenv
 from scraper import WellfoundScraper
 
