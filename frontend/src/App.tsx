@@ -5,15 +5,21 @@ import { useState } from 'react'
 import { KeywordInput } from './components/KeywordInput'
 import { Card, CardDescription, CardTitle } from './components/ui/card'
 import { Button } from './components/ui/button'
+import { CompaniesByKeyword } from './components/CompaniesByKeywords'
+
+interface CompaniesData {
+  [key: string]: string[];
+}
 
 interface Jobs {
-  jobs : any[]
+  jobs: any[];
+  companies_by_keyword: CompaniesData;
 }
 
 function App() {
   const [keywords, setKeywords] = useState<string[]>([])
   const [error, setError] = useState('')
-  const [jobs, setJobs] = useState<Jobs | null>()
+  const [jobs, setJobs] = useState<Jobs | null>(null)
   
   const fetchJobsAndCompanies = async () => {
     try {
@@ -50,6 +56,9 @@ function App() {
             Search jobs
           </Button>
         </div>
+        {jobs?.companies_by_keyword && (
+          <CompaniesByKeyword companiesData={jobs.companies_by_keyword} />
+        )}
         <JobGrid jobs={jobs?.jobs || []} />
         {error && <div className="text-red-500">{error}</div>}
       </div>
