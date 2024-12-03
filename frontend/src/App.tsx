@@ -17,7 +17,6 @@ interface Jobs {
 }
 
 function App() {
-  const [keywords, setKeywords] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [jobs, setJobs] = useState<Jobs | null>(null);
 
@@ -39,23 +38,12 @@ function App() {
     }
   };
 
-  const handleKeywordsChange = (newKeywords: string[]) => {
-    setKeywords(newKeywords);
-  };
-
   return (
     <>
       <div>
         <Card className="px-5 py-5 my-4">
           <CardTitle>Job Scraper:</CardTitle>
-          <CardDescription>
-            Add the keywords you want to search jobs for on Wellfound.
-          </CardDescription>
         </Card>
-        <KeywordInput
-          keywords={keywords}
-          onKeyWordsChange={handleKeywordsChange}
-        />
         <div className="flex justify-center">
           <Button onClick={fetchJobsAndCompanies}>Search jobs</Button>
         </div>
