@@ -1,16 +1,34 @@
 import os
 from flask import Flask, jsonify, request
+import json
 from flask_cors import CORS
+import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+import time
 from dotenv import load_dotenv
 from scraper import WellfoundScraper
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:5173"], 
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True  
+    }
+})
 
 @app.route('/')
 def home():
     return 'JOB scraper!'
-    
+
 @app.route('/scrape_jobs', methods=['POST'])
 def scrape_jobs():
     """
